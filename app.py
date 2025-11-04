@@ -16,7 +16,16 @@ st.markdown("**Thesis Dashboard - Interactive Analysis**")
 # Data loading function
 @st.cache_data
 def load_data():
-    df = pd.read_parquet('cleaned_rental_data.parquet')
+    file_id = "1_pJo6fWPcphqKBmKWqLi2huc3Zdy14ep"
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    
+    # Download the file
+    response = requests.get(url)
+    response.raise_for_status()  # Check for errors
+    
+    # Load into DataFrame
+    df = pd.read_csv(io.StringIO(response.text))
+   
     
     # Create price categories
     df['price_category'] = pd.cut(df['totalRent'], 
@@ -184,4 +193,5 @@ with tab4:
 
 # Footer
 st.markdown("---")
+
 st.markdown("**Thesis Research Dashboard** • Built with Streamlit")
