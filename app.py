@@ -18,7 +18,7 @@ st.markdown("**Thesis Dashboard - Interactive Analysis**")
 # Data loading function
 @st.cache_data
 def load_data():
-    file_id = "https://drive.google.com/file/d/1_pJo6fWPcphqKBmKWqLi2huc3Zdy14ep/view?usp=sharing"
+    file_id = "1_pJo6fWPcphqKBmKWqLi2huc3Zdy14ep"
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
     
     # Download the file
@@ -197,6 +197,7 @@ with tab4:
 st.markdown("---")
 
 st.markdown("**Thesis Research Dashboard** • Built with Streamlit")
+
 
 
 
