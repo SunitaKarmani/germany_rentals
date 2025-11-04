@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import requests
+import io
 
 # Page configuration
 st.set_page_config(
@@ -20,7 +22,7 @@ def load_data():
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
     
     # Download the file
-    response = url
+    requests.get(csv_url)
     response.raise_for_status()  # Check for errors
     
     # Load into DataFrame
@@ -195,6 +197,7 @@ with tab4:
 st.markdown("---")
 
 st.markdown("**Thesis Research Dashboard** • Built with Streamlit")
+
 
 
 
