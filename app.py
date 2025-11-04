@@ -16,11 +16,11 @@ st.markdown("**Thesis Dashboard - Interactive Analysis**")
 # Data loading function
 @st.cache_data
 def load_data():
-    file_id = "WmWYP#lscaC0eejP"
+    file_id = "https://limewire.com/d/WmWYP#lscaC0eejP"
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
     
     # Download the file
-    response = requests.get(url)
+    response = url
     response.raise_for_status()  # Check for errors
     
     # Load into DataFrame
@@ -195,4 +195,5 @@ with tab4:
 st.markdown("---")
 
 st.markdown("**Thesis Research Dashboard** • Built with Streamlit")
+
 
