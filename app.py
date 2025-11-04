@@ -22,8 +22,8 @@ def load_data():
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
     
     # Download the file
-    requests.get(url)
-    #response.raise_for_status()  # Check for errors
+    response = requests.get(url)
+    response.raise_for_status()  # Check for errors
     
     # Load into DataFrame
     df = pd.read_csv(io.StringIO(response.text))
@@ -197,6 +197,7 @@ with tab4:
 st.markdown("---")
 
 st.markdown("**Thesis Research Dashboard** • Built with Streamlit")
+
 
 
 
