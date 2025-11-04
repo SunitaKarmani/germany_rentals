@@ -21,7 +21,7 @@ def load_data():
     
     # Download the file
     response = url
-    response.raise_for_status()  # Check for errors
+    #response.raise_for_status()  # Check for errors
     
     # Load into DataFrame
     df = pd.read_csv(io.StringIO(response.text))
@@ -195,5 +195,6 @@ with tab4:
 st.markdown("---")
 
 st.markdown("**Thesis Research Dashboard** • Built with Streamlit")
+
 
 
