@@ -13,7 +13,6 @@ st.set_page_config(
 
 # Title
 st.title("🏠 German Rental Market Analysis")
-st.markdown("**Thesis Dashboard - Interactive Analysis**")
 
 # Data loading function
 @st.cache_data
@@ -196,7 +195,7 @@ with tab4:
 # Footer
 st.markdown("---")
 
-st.markdown("**Thesis Research Dashboard** • Built with Streamlit")
+
 
 
 
