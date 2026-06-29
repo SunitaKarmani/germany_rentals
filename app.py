@@ -20,14 +20,11 @@ def load_data():
     file_id = "1_pJo6fWPcphqKBmKWqLi2huc3Zdy14ep"
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
     
-    # Download the file
     response = requests.get(url)
-    response.raise_for_status()  # Check for errors
+    response.raise_for_status()
     
-    # Load into DataFrame
     df = pd.read_csv(io.StringIO(response.text))
    
-    
     # Create price categories
     df['price_category'] = pd.cut(df['totalRent'], 
                                  bins=[0, 500, 1000, 1500, 3000],
@@ -47,11 +44,9 @@ except Exception as e:
 # Sidebar filters
 st.sidebar.header("🔍 Filter Data")
 
-# State filter
 states = ['All States'] + sorted(df['regio1'].unique().tolist())
 selected_state = st.sidebar.selectbox('Select Federal State', states)
 
-# Price segment filter
 segments = ['All Segments'] + sorted(df['price_category'].unique().tolist())
 selected_segment = st.sidebar.selectbox('Select Price Segment', segments)
 
@@ -81,13 +76,26 @@ with col4:
     price_per_sqm = (filtered_df['totalRent'] / filtered_df['livingSpace']).mean()
     st.metric("Price per m²", f"€{price_per_sqm:.1f}")
 
-# Tabs for different analyses
-tab1, tab2, tab3, tab4 = st.tabs(["🏘️ Market Segments", "🗺️ Geography", "💎 Amenities", "🔗 Relationships"])
+# ============================================================
+# TABS: 8 tabs total
+# ============================================================
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    "🏘️ Market Segments",
+    "🗺️ Geography",
+    "💎 Amenities",
+    "🔗 Relationships",
+    "🏚️ Property Condition",
+    "📐 Property Characteristics",
+    "📊 Price per m²",
+    "🏠 Overview"
+])
 
+# ============================================================
+# TAB 1: MARKET SEGMENTS
+# ============================================================
 with tab1:
     st.subheader("Market Segments Analysis")
     
-    # Segment analysis
     segment_data = filtered_df.groupby('price_category').agg({
         'totalRent': ['mean', 'count'],
         'livingSpace': 'mean'
@@ -98,30 +106,29 @@ with tab1:
     col1, col2 = st.columns(2)
     
     with col1:
-        # Market share
         fig1 = px.pie(segment_data, values='count', names='price_category', 
                      title='Market Share by Price Segment')
         fig1.update_traces(textinfo='percent+label')
         st.plotly_chart(fig1, use_container_width=True)
     
     with col2:
-        # Average rent
         fig2 = px.bar(segment_data, x='price_category', y='avg_rent',
                      title='Average Rent by Segment', text='avg_rent')
         fig2.update_traces(texttemplate='€%{text:.0f}', textposition='outside')
         st.plotly_chart(fig2, use_container_width=True)
     
-    # Space vs Rent
     fig3 = px.scatter(filtered_df.sample(min(1000, len(filtered_df))),
                      x='livingSpace', y='totalRent', color='price_category',
                      title='Living Space vs Rent Relationship', 
                      labels={'livingSpace': 'Space (m²)', 'totalRent': 'Rent (€)'})
     st.plotly_chart(fig3, use_container_width=True)
 
+# ============================================================
+# TAB 2: GEOGRAPHY
+# ============================================================
 with tab2:
     st.subheader("Geographic Analysis")
     
-    # State analysis
     state_data = filtered_df.groupby('regio1').agg({
         'totalRent': ['mean', 'count'],
         'livingSpace': 'mean'
@@ -132,7 +139,6 @@ with tab2:
     col1, col2 = st.columns(2)
     
     with col1:
-        # Rent by state
         fig4 = px.bar(state_data, x='regio1', y='avg_rent', 
                      title='Average Rent by State', text='avg_rent')
         fig4.update_traces(texttemplate='€%{text:.0f}', textposition='outside')
@@ -140,15 +146,16 @@ with tab2:
         st.plotly_chart(fig4, use_container_width=True)
     
     with col2:
-        # State distribution
         fig5 = px.pie(state_data, values='count', names='regio1',
                      title='Listings Distribution by State')
         st.plotly_chart(fig5, use_container_width=True)
 
+# ============================================================
+# TAB 3: AMENITIES
+# ============================================================
 with tab3:
     st.subheader("Amenities Analysis")
     
-    # Analyze amenities
     amenities = ['balcony', 'hasKitchen', 'lift', 'garden', 'cellar']
     amenity_results = []
     
@@ -182,28 +189,343 @@ with tab3:
             fig8.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
             st.plotly_chart(fig8, use_container_width=True)
 
+# ============================================================
+# TAB 4: RELATIONSHIPS
+# ============================================================
 with tab4:
     st.subheader("Relationship Analysis")
     
-    # Segments by state heatmap
     segment_state = pd.crosstab(filtered_df['regio1'], filtered_df['price_category'], 
                                normalize='index') * 100
     fig9 = px.imshow(segment_state, title='Price Segments by State (%)',
                     color_continuous_scale='Blues')
     st.plotly_chart(fig9, use_container_width=True)
 
+# ============================================================
+# TAB 5: PROPERTY CONDITION
+# ============================================================
+with tab5:
+    st.subheader("Property Condition Analysis")
+    
+    if 'condition' in filtered_df.columns:
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Rent by Condition
+            condition_rent = filtered_df.groupby('condition')['totalRent'].mean().reset_index()
+            condition_rent = condition_rent.sort_values('totalRent', ascending=True)
+            
+            fig_condition_rent = px.bar(
+                condition_rent,
+                x='totalRent',
+                y='condition',
+                orientation='h',
+                title='Average Rent by Property Condition',
+                labels={'totalRent': 'Average Rent (€)', 'condition': ''},
+                text='totalRent',
+                color='totalRent',
+                color_continuous_scale='Viridis'
+            )
+            fig_condition_rent.update_traces(texttemplate='€%{text:.0f}', textposition='outside')
+            fig_condition_rent.update_layout(height=400)
+            st.plotly_chart(fig_condition_rent, use_container_width=True)
+        
+        with col2:
+            # Condition by Segment
+            condition_by_segment = pd.crosstab(
+                filtered_df['price_category'], 
+                filtered_df['condition'], 
+                normalize='index'
+            ) * 100
+            condition_by_segment = condition_by_segment.round(1)
+            
+            condition_plot = condition_by_segment.reset_index().melt(
+                id_vars='price_category', 
+                value_name='percentage', 
+                var_name='condition'
+            )
+            
+            fig_condition_segment = px.bar(
+                condition_plot,
+                x='price_category',
+                y='percentage',
+                color='condition',
+                title='Condition Distribution by Market Segment',
+                labels={'price_category': 'Market Segment', 'percentage': '%'},
+                color_discrete_sequence=px.colors.qualitative.Set3
+            )
+            fig_condition_segment.update_layout(
+                height=400,
+                barmode='stack',
+                yaxis=dict(range=[0, 100])
+            )
+            fig_condition_segment.update_traces(
+                texttemplate='%{text:.1f}%', 
+                textposition='inside',
+                textfont=dict(size=9)
+            )
+            st.plotly_chart(fig_condition_segment, use_container_width=True)
+        
+        # Price Trend by Condition
+        if 'calculated_pricetrend' in filtered_df.columns:
+            st.subheader("Price Trend by Property Condition")
+            
+            condition_order = filtered_df.groupby('condition')['calculated_pricetrend'].median().sort_values(ascending=False).index
+            
+            fig_trend = px.box(
+                filtered_df,
+                x='condition',
+                y='calculated_pricetrend',
+                order={'condition': list(condition_order)},
+                title='Price Trend by Property Condition',
+                labels={'condition': '', 'calculated_pricetrend': 'Deviation from Regional Median (€/m²)'},
+                color='condition',
+                color_discrete_sequence=px.colors.qualitative.Set3
+            )
+            fig_trend.add_hline(y=0, line_dash="dash", line_color="red", opacity=0.5)
+            fig_trend.update_xaxes(tickangle=45)
+            st.plotly_chart(fig_trend, use_container_width=True)
+        
+    else:
+        st.warning("⚠️ 'condition' column not found in the dataset.")
+
+# ============================================================
+# TAB 6: PROPERTY CHARACTERISTICS (NEW)
+# ============================================================
+with tab6:
+    st.subheader("Property Characteristics Analysis")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Rent by Property Type
+        if 'typeOfFlat' in filtered_df.columns:
+            type_rent = filtered_df.groupby('typeOfFlat')['totalRent'].mean().sort_values(ascending=False).reset_index()
+            
+            fig_type = px.bar(
+                type_rent,
+                x='typeOfFlat',
+                y='totalRent',
+                title='Average Rent by Property Type',
+                labels={'typeOfFlat': '', 'totalRent': 'Average Rent (€)'},
+                text='totalRent',
+                color='totalRent',
+                color_continuous_scale='Viridis'
+            )
+            fig_type.update_traces(texttemplate='€%{text:.0f}', textposition='outside')
+            fig_type.update_xaxes(tickangle=45)
+            fig_type.update_layout(height=400)
+            st.plotly_chart(fig_type, use_container_width=True)
+    
+    with col2:
+        # Rent by Heating Type
+        if 'heatingType' in filtered_df.columns:
+            heating_rent = filtered_df.groupby('heatingType')['totalRent'].mean().sort_values(ascending=False).reset_index()
+            
+            fig_heating = px.bar(
+                heating_rent.head(10),
+                x='heatingType',
+                y='totalRent',
+                title='Average Rent by Heating Type (Top 10)',
+                labels={'heatingType': '', 'totalRent': 'Average Rent (€)'},
+                text='totalRent',
+                color='totalRent',
+                color_continuous_scale='Plasma'
+            )
+            fig_heating.update_traces(texttemplate='€%{text:.0f}', textposition='outside')
+            fig_heating.update_xaxes(tickangle=45)
+            fig_heating.update_layout(height=400)
+            st.plotly_chart(fig_heating, use_container_width=True)
+    
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        # Rent by Construction Year
+        if 'yearConstructed' in filtered_df.columns:
+            year_rent = filtered_df.groupby('yearConstructed')['totalRent'].mean().reset_index()
+            year_rent = year_rent[year_rent['yearConstructed'] > 1900]
+            
+            fig_year = px.line(
+                year_rent,
+                x='yearConstructed',
+                y='totalRent',
+                title='Average Rent by Construction Year',
+                labels={'yearConstructed': 'Construction Year', 'totalRent': 'Average Rent (€)'},
+                markers=True,
+                color_discrete_sequence=['#2E86AB']
+            )
+            fig_year.update_layout(height=400)
+            st.plotly_chart(fig_year, use_container_width=True)
+    
+    with col4:
+        # Rent by Energy Efficiency
+        if 'energyEfficiencyClass' in filtered_df.columns:
+            energy_rent = filtered_df.groupby('energyEfficiencyClass')['totalRent'].mean().reset_index()
+            energy_order = ['A+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+            energy_rent['energyEfficiencyClass'] = pd.Categorical(
+                energy_rent['energyEfficiencyClass'], 
+                categories=energy_order, 
+                ordered=True
+            )
+            energy_rent = energy_rent.sort_values('energyEfficiencyClass')
+            
+            fig_energy = px.bar(
+                energy_rent,
+                x='energyEfficiencyClass',
+                y='totalRent',
+                title='Average Rent by Energy Efficiency Class',
+                labels={'energyEfficiencyClass': 'Energy Class', 'totalRent': 'Average Rent (€)'},
+                text='totalRent',
+                color='totalRent',
+                color_continuous_scale='RdYlGn'
+            )
+            fig_energy.update_traces(texttemplate='€%{text:.0f}', textposition='outside')
+            fig_energy.update_layout(height=400)
+            st.plotly_chart(fig_energy, use_container_width=True)
+
+# ============================================================
+# TAB 7: PRICE PER SQUARE METER (NEW)
+# ============================================================
+with tab7:
+    st.subheader("Price per Square Meter Analysis")
+    
+    # Calculate price per square meter
+    filtered_df['price_per_sqm'] = filtered_df['totalRent'] / filtered_df['livingSpace']
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Price per m² distribution
+        fig_sqm_dist = px.histogram(
+            filtered_df[filtered_df['price_per_sqm'] < 30],
+            x='price_per_sqm',
+            nbins=50,
+            title='Price per Square Meter Distribution',
+            labels={'price_per_sqm': 'Price per m² (€)', 'count': 'Number of Listings'},
+            color_discrete_sequence=['#F18F01']
+        )
+        fig_sqm_dist.update_layout(height=400)
+        st.plotly_chart(fig_sqm_dist, use_container_width=True)
+    
+    with col2:
+        # Price per m² by Condition
+        if 'condition' in filtered_df.columns:
+            sqm_condition = filtered_df.groupby('condition')['price_per_sqm'].mean().sort_values(ascending=False).reset_index()
+            
+            fig_sqm_condition = px.bar(
+                sqm_condition,
+                x='condition',
+                y='price_per_sqm',
+                title='Price per m² by Property Condition',
+                labels={'condition': '', 'price_per_sqm': 'Price per m² (€)'},
+                text='price_per_sqm',
+                color='price_per_sqm',
+                color_continuous_scale='Viridis'
+            )
+            fig_sqm_condition.update_traces(texttemplate='€%{text:.2f}', textposition='outside')
+            fig_sqm_condition.update_xaxes(tickangle=45)
+            fig_sqm_condition.update_layout(height=400)
+            st.plotly_chart(fig_sqm_condition, use_container_width=True)
+    
+    col3, col4 = st.columns(2)
+    
+    with col3:
+        # Price per m² by City (Top 10)
+        if 'regio3' in filtered_df.columns:
+            sqm_city = filtered_df.groupby('regio3')['price_per_sqm'].mean().sort_values(ascending=False).head(10).reset_index()
+            
+            fig_sqm_city = px.bar(
+                sqm_city,
+                x='regio3',
+                y='price_per_sqm',
+                title='Top 10 Cities by Price per m²',
+                labels={'regio3': '', 'price_per_sqm': 'Price per m² (€)'},
+                text='price_per_sqm',
+                color='price_per_sqm',
+                color_continuous_scale='Reds'
+            )
+            fig_sqm_city.update_traces(texttemplate='€%{text:.2f}', textposition='outside')
+            fig_sqm_city.update_xaxes(tickangle=45)
+            fig_sqm_city.update_layout(height=400)
+            st.plotly_chart(fig_sqm_city, use_container_width=True)
+    
+    with col4:
+        # Price per m² by Energy Efficiency
+        if 'energyEfficiencyClass' in filtered_df.columns:
+            sqm_energy = filtered_df.groupby('energyEfficiencyClass')['price_per_sqm'].mean().reset_index()
+            energy_order = ['A+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+            sqm_energy['energyEfficiencyClass'] = pd.Categorical(
+                sqm_energy['energyEfficiencyClass'], 
+                categories=energy_order, 
+                ordered=True
+            )
+            sqm_energy = sqm_energy.sort_values('energyEfficiencyClass')
+            
+            fig_sqm_energy = px.bar(
+                sqm_energy,
+                x='energyEfficiencyClass',
+                y='price_per_sqm',
+                title='Price per m² by Energy Efficiency Class',
+                labels={'energyEfficiencyClass': 'Energy Class', 'price_per_sqm': 'Price per m² (€)'},
+                text='price_per_sqm',
+                color='price_per_sqm',
+                color_continuous_scale='RdYlGn'
+            )
+            fig_sqm_energy.update_traces(texttemplate='€%{text:.2f}', textposition='outside')
+            fig_sqm_energy.update_layout(height=400)
+            st.plotly_chart(fig_sqm_energy, use_container_width=True)
+
+# ============================================================
+# TAB 8: OVERVIEW
+# ============================================================
+with tab8:
+    st.subheader("Overview")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Rent distribution
+        fig_rent = px.histogram(
+            filtered_df,
+            x='totalRent',
+            nbins=100,
+            title='Total Rent Distribution',
+            labels={'totalRent': 'Total Rent (€)', 'count': 'Number of Listings'},
+            color_discrete_sequence=['salmon']
+        )
+        st.plotly_chart(fig_rent, use_container_width=True)
+    
+    with col2:
+        # Living space distribution
+        fig_space = px.histogram(
+            filtered_df,
+            x='livingSpace',
+            nbins=50,
+            title='Living Space Distribution',
+            labels={'livingSpace': 'Living Space (m²)', 'count': 'Number of Listings'},
+            color_discrete_sequence=['#2E86AB']
+        )
+        st.plotly_chart(fig_space, use_container_width=True)
+    
+    # Listings by month (if date column exists)
+    if 'date' in filtered_df.columns:
+        filtered_df['date_parsed'] = pd.to_datetime(filtered_df['date'], format='%b%y')
+        monthly_count = filtered_df.groupby(filtered_df['date_parsed'].dt.to_period('M')).size().reset_index()
+        monthly_count.columns = ['month', 'count']
+        monthly_count['month'] = monthly_count['month'].dt.to_timestamp()
+        
+        fig_monthly = px.bar(
+            monthly_count,
+            x='month',
+            y='count',
+            title='Number of Listings by Month',
+            labels={'month': 'Month', 'count': 'Number of Listings'},
+            color_discrete_sequence=['green']
+        )
+        fig_monthly.update_xaxes(tickangle=45)
+        st.plotly_chart(fig_monthly, use_container_width=True)
+
 # Footer
 st.markdown("---")
-
-
-
-
-
-
-
-
-
-
-
-
-
+st.caption("📊 Data source: ImmobilienScout24 (2018-2020) | Built with Streamlit")
