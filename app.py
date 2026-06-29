@@ -82,7 +82,7 @@ with col4:
     st.metric("Price per m²", f"€{price_per_sqm:.1f}")
 
 # ============================================================
-# TABS: 8 tabs total
+# TABS
 # ============================================================
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "🏘️ Market Segments",
@@ -217,95 +217,101 @@ with tab5:
         # Check if condition column has data
         if filtered_df['condition'].notna().sum() > 0:
             
-            col1, col2 = st.columns(2)
+            # Drop rows with missing condition for these plots
+            plot_df = filtered_df.dropna(subset=['condition']).copy()
             
-            with col1:
-                # Rent by Condition
-                condition_rent = filtered_df.groupby('condition')['totalRent'].mean().reset_index()
-                condition_rent = condition_rent.sort_values('totalRent', ascending=True)
+            if len(plot_df) > 0:
                 
-                fig_condition_rent = px.bar(
-                    condition_rent,
-                    x='totalRent',
-                    y='condition',
-                    orientation='h',
-                    title='Average Rent by Property Condition',
-                    labels={'totalRent': 'Average Rent (€)', 'condition': ''},
-                    text='totalRent',
-                    color='totalRent',
-                    color_continuous_scale='Viridis'
-                )
-                fig_condition_rent.update_traces(texttemplate='€%{text:.0f}', textposition='outside')
-                fig_condition_rent.update_layout(height=400)
-                st.plotly_chart(fig_condition_rent, use_container_width=True)
-            
-            with col2:
-                # Condition by Segment
-                condition_by_segment = pd.crosstab(
-                    filtered_df['price_category'], 
-                    filtered_df['condition'], 
-                    normalize='index'
-                ) * 100
-                condition_by_segment = condition_by_segment.round(1)
+                col1, col2 = st.columns(2)
                 
-                condition_plot = condition_by_segment.reset_index().melt(
-                    id_vars='price_category', 
-                    value_name='percentage', 
-                    var_name='condition'
-                )
+                with col1:
+                    # Rent by Condition
+                    condition_rent = plot_df.groupby('condition')['totalRent'].mean().reset_index()
+                    condition_rent = condition_rent.sort_values('totalRent', ascending=True)
+                    
+                    fig_condition_rent = px.bar(
+                        condition_rent,
+                        x='totalRent',
+                        y='condition',
+                        orientation='h',
+                        title='Average Rent by Property Condition',
+                        labels={'totalRent': 'Average Rent (€)', 'condition': ''},
+                        text='totalRent',
+                        color='totalRent',
+                        color_continuous_scale='Viridis'
+                    )
+                    fig_condition_rent.update_traces(texttemplate='€%{text:.0f}', textposition='outside')
+                    fig_condition_rent.update_layout(height=400)
+                    st.plotly_chart(fig_condition_rent, use_container_width=True)
                 
-                fig_condition_segment = px.bar(
-                    condition_plot,
-                    x='price_category',
-                    y='percentage',
-                    color='condition',
-                    title='Condition Distribution by Market Segment',
-                    labels={'price_category': 'Market Segment', 'percentage': '%'},
-                    color_discrete_sequence=px.colors.qualitative.Set3
-                )
-                fig_condition_segment.update_layout(
-                    height=400,
-                    barmode='stack',
-                    yaxis=dict(range=[0, 100])
-                )
-                fig_condition_segment.update_traces(
-                    texttemplate='%{text:.1f}%', 
-                    textposition='inside',
-                    textfont=dict(size=9)
-                )
-                st.plotly_chart(fig_condition_segment, use_container_width=True)
-            
-            # Price Trend by Condition (FIXED: Added checks)
-            if 'calculated_pricetrend' in filtered_df.columns:
-                # Check if calculated_pricetrend has valid data
-                if filtered_df['calculated_pricetrend'].notna().sum() > 0:
+                with col2:
+                    # Condition by Segment
+                    condition_by_segment = pd.crosstab(
+                        plot_df['price_category'], 
+                        plot_df['condition'], 
+                        normalize='index'
+                    ) * 100
+                    condition_by_segment = condition_by_segment.round(1)
                     
-                    st.subheader("Price Trend by Property Condition")
+                    condition_plot = condition_by_segment.reset_index().melt(
+                        id_vars='price_category', 
+                        value_name='percentage', 
+                        var_name='condition'
+                    )
                     
-                    # Get condition order by median price trend
-                    condition_order = filtered_df.groupby('condition')['calculated_pricetrend'].median().sort_values(ascending=False).index.tolist()
-                    
-                    # Filter out any conditions with no data
-                    condition_order = [c for c in condition_order if c in filtered_df['condition'].unique()]
-                    
-                    if len(condition_order) > 0:
+                    fig_condition_segment = px.bar(
+                        condition_plot,
+                        x='price_category',
+                        y='percentage',
+                        color='condition',
+                        title='Condition Distribution by Market Segment',
+                        labels={'price_category': 'Market Segment', 'percentage': '%'},
+                        color_discrete_sequence=px.colors.qualitative.Set3
+                    )
+                    fig_condition_segment.update_layout(
+                        height=400,
+                        barmode='stack',
+                        yaxis=dict(range=[0, 100])
+                    )
+                    fig_condition_segment.update_traces(
+                        texttemplate='%{text:.1f}%', 
+                        textposition='inside',
+                        textfont=dict(size=9)
+                    )
+                    st.plotly_chart(fig_condition_segment, use_container_width=True)
+                
+                # Price Trend by Condition (FIXED: Simplified version without order parameter)
+                if 'calculated_pricetrend' in plot_df.columns:
+                    if plot_df['calculated_pricetrend'].notna().sum() > 0:
+                        
+                        st.subheader("Price Trend by Property Condition")
+                        
+                        # Create box plot WITHOUT the order parameter to avoid errors
                         fig_trend = px.box(
-                            filtered_df,
+                            plot_df,
                             x='condition',
                             y='calculated_pricetrend',
-                            order={'condition': condition_order},
                             title='Price Trend by Property Condition',
                             labels={'condition': '', 'calculated_pricetrend': 'Deviation from Regional Median (€/m²)'},
                             color='condition',
                             color_discrete_sequence=px.colors.qualitative.Set3
                         )
+                        
+                        # Add reference line at 0
                         fig_trend.add_hline(y=0, line_dash="dash", line_color="red", opacity=0.5)
+                        
+                        # Rotate x-axis labels if needed
                         fig_trend.update_xaxes(tickangle=45)
+                        
+                        # Set height
+                        fig_trend.update_layout(height=450)
+                        
                         st.plotly_chart(fig_trend, use_container_width=True)
+                        
                     else:
-                        st.info("ℹ️ Insufficient data to display price trend by condition.")
-                else:
-                    st.info("ℹ️ No price trend data available.")
+                        st.info("ℹ️ No price trend data available.")
+            else:
+                st.warning("⚠️ No valid condition data after removing missing values.")
         else:
             st.warning("⚠️ No condition data available for the selected filters.")
     else:
@@ -424,16 +430,22 @@ with tab7:
     col1, col2 = st.columns(2)
     
     with col1:
-        fig_sqm_dist = px.histogram(
-            filtered_df[filtered_df['price_per_sqm'] < 30],
-            x='price_per_sqm',
-            nbins=50,
-            title='Price per Square Meter Distribution',
-            labels={'price_per_sqm': 'Price per m² (€)', 'count': 'Number of Listings'},
-            color_discrete_sequence=['#F18F01']
-        )
-        fig_sqm_dist.update_layout(height=400)
-        st.plotly_chart(fig_sqm_dist, use_container_width=True)
+        # Filter out extreme values for better visualization
+        sqm_plot_df = filtered_df[filtered_df['price_per_sqm'] < 30].copy()
+        
+        if len(sqm_plot_df) > 0:
+            fig_sqm_dist = px.histogram(
+                sqm_plot_df,
+                x='price_per_sqm',
+                nbins=50,
+                title='Price per Square Meter Distribution',
+                labels={'price_per_sqm': 'Price per m² (€)', 'count': 'Number of Listings'},
+                color_discrete_sequence=['#F18F01']
+            )
+            fig_sqm_dist.update_layout(height=400)
+            st.plotly_chart(fig_sqm_dist, use_container_width=True)
+        else:
+            st.info("ℹ️ No price per m² data available.")
     
     with col2:
         if 'condition' in filtered_df.columns and filtered_df['condition'].notna().sum() > 0:
