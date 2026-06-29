@@ -7,12 +7,11 @@ import io
 # Page configuration
 st.set_page_config(
     page_title="German Rental Market Analysis",
-    page_icon="🏠",
     layout="wide"
 )
 
 # Title
-st.title("🏠 German Rental Market Analysis")
+st.title("German Rental Market Analysis")
 
 # Data loading function
 @st.cache_data
@@ -36,7 +35,7 @@ def load_data():
 # Load the data
 try:
     df = load_data()
-    st.success("✅ Data loaded successfully!")
+    st.success()
 except Exception as e:
     st.error(f"Error loading data: {e}")
     st.stop()
@@ -63,7 +62,7 @@ if len(filtered_df) == 0:
     st.stop()
 
 # Key metrics
-st.subheader("📊 Key Metrics")
+st.subheader("Key Metrics")
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -81,23 +80,23 @@ with col4:
     price_per_sqm = (filtered_df['totalRent'] / filtered_df['livingSpace']).mean()
     st.metric("Price per m²", f"€{price_per_sqm:.1f}")
 
-# ============================================================
+
 # TABS
-# ============================================================
+
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-    "🏘️ Market Segments",
-    "🗺️ Geography",
-    "💎 Amenities",
-    "🔗 Relationships",
-    "🏚️ Property Condition",
-    "📐 Property Characteristics",
-    "📊 Price per m²",
-    "🏠 Overview"
+    "Market Segments",
+    "Geography",
+    "Amenities",
+    "Relationships",
+    "Property Condition",
+    "Property Characteristics",
+    "Price per m²",
+    "Overview"
 ])
 
-# ============================================================
+
 # TAB 1: MARKET SEGMENTS
-# ============================================================
+
 with tab1:
     st.subheader("Market Segments Analysis")
     
@@ -128,9 +127,9 @@ with tab1:
                      labels={'livingSpace': 'Space (m²)', 'totalRent': 'Rent (€)'})
     st.plotly_chart(fig3, use_container_width=True)
 
-# ============================================================
+
 # TAB 2: GEOGRAPHY
-# ============================================================
+
 with tab2:
     st.subheader("Geographic Analysis")
     
@@ -155,9 +154,9 @@ with tab2:
                      title='Listings Distribution by State')
         st.plotly_chart(fig5, use_container_width=True)
 
-# ============================================================
+
 # TAB 3: AMENITIES
-# ============================================================
+
 with tab3:
     st.subheader("Amenities Analysis")
     
@@ -194,9 +193,9 @@ with tab3:
             fig8.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
             st.plotly_chart(fig8, use_container_width=True)
 
-# ============================================================
+
 # TAB 4: RELATIONSHIPS
-# ============================================================
+
 with tab4:
     st.subheader("Relationship Analysis")
     
@@ -206,9 +205,9 @@ with tab4:
                     color_continuous_scale='Blues')
     st.plotly_chart(fig9, use_container_width=True)
 
-# ============================================================
+
 # TAB 5: PROPERTY CONDITION
-# ============================================================
+
 with tab5:
     st.subheader("Property Condition Analysis")
     
@@ -296,9 +295,9 @@ with tab5:
                         fig_trend.update_layout(height=450)
                         st.plotly_chart(fig_trend, use_container_width=True)
 
-# ============================================================
+
 # TAB 6: PROPERTY CHARACTERISTICS
-# ============================================================
+
 with tab6:
     st.subheader("Property Characteristics Analysis")
     
@@ -323,7 +322,7 @@ with tab6:
             fig_type.update_layout(height=400)
             st.plotly_chart(fig_type, use_container_width=True)
         else:
-            st.info("ℹ️ No property type data available.")
+            st.info("No property type data available.")
     
     with col2:
         if 'heatingType' in filtered_df.columns and filtered_df['heatingType'].notna().sum() > 0:
@@ -344,7 +343,7 @@ with tab6:
             fig_heating.update_layout(height=400)
             st.plotly_chart(fig_heating, use_container_width=True)
         else:
-            st.info("ℹ️ No heating type data available.")
+            st.info("No heating type data available.")
     
     col3, col4 = st.columns(2)
     
@@ -366,13 +365,13 @@ with tab6:
                 fig_year.update_layout(height=400)
                 st.plotly_chart(fig_year, use_container_width=True)
             else:
-                st.info("ℹ️ No construction year data available.")
+                st.info("No construction year data available.")
         else:
-            st.info("ℹ️ No construction year data available.")
+            st.info("No construction year data available.")
 
-# ============================================================
+
 # TAB 7: PRICE PER SQUARE METER
-# ============================================================
+
 with tab7:
     st.subheader("Price per Square Meter Analysis")
     
@@ -395,7 +394,7 @@ with tab7:
             fig_sqm_dist.update_layout(height=400)
             st.plotly_chart(fig_sqm_dist, use_container_width=True)
         else:
-            st.info("ℹ️ No price per m² data available.")
+            st.info("No price per m² data available.")
     
     with col2:
         if 'condition' in filtered_df.columns and filtered_df['condition'].notna().sum() > 0:
@@ -416,7 +415,7 @@ with tab7:
             fig_sqm_condition.update_layout(height=400)
             st.plotly_chart(fig_sqm_condition, use_container_width=True)
         else:
-            st.info("ℹ️ No condition data available for price per m² analysis.")
+            st.info("No condition data available for price per m² analysis.")
     
     col3, col4 = st.columns(2)
     
@@ -439,11 +438,11 @@ with tab7:
             fig_sqm_city.update_layout(height=400)
             st.plotly_chart(fig_sqm_city, use_container_width=True)
         else:
-            st.info("ℹ️ No city data available for price per m² analysis.")
+            st.info("No city data available for price per m² analysis.")
 
-# ============================================================
+
 # TAB 8: OVERVIEW
-# ============================================================
+
 with tab8:
     st.subheader("Overview")
     
@@ -489,8 +488,8 @@ with tab8:
             fig_monthly.update_xaxes(tickangle=45)
             st.plotly_chart(fig_monthly, use_container_width=True)
         except:
-            st.info("ℹ️ Date data could not be parsed.")
+            st.info("Date data could not be parsed.")
 
 # Footer
 st.markdown("---")
-st.caption("📊 Data source: ImmobilienScout24 (2018-2020) | Built with Streamlit")
+st.caption("Data source: ImmobilienScout24 (2018-2020) | Built with Streamlit")
