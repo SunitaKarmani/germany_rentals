@@ -35,7 +35,7 @@ def load_data():
 # Load the data
 try:
     df = load_data()
-    st.success()
+    # st.success()
 except Exception as e:
     st.error(f"Error loading data: {e}")
     st.stop()
