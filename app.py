@@ -90,8 +90,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "Relationships",
     "Property Condition",
     "Property Characteristics",
-    "Price per m²",
-    "Overview"
+    "Price per m²"
 ])
 
 
@@ -441,54 +440,6 @@ with tab7:
             st.info("No city data available for price per m² analysis.")
 
 
-# TAB 8: OVERVIEW
-
-with tab8:
-    st.subheader("Overview")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        fig_rent = px.histogram(
-            filtered_df,
-            x='totalRent',
-            nbins=100,
-            title='Total Rent Distribution',
-            labels={'totalRent': 'Total Rent (€)', 'count': 'Number of Listings'},
-            color_discrete_sequence=['salmon']
-        )
-        st.plotly_chart(fig_rent, use_container_width=True)
-    
-    with col2:
-        fig_space = px.histogram(
-            filtered_df,
-            x='livingSpace',
-            nbins=50,
-            title='Living Space Distribution',
-            labels={'livingSpace': 'Living Space (m²)', 'count': 'Number of Listings'},
-            color_discrete_sequence=['#2E86AB']
-        )
-        st.plotly_chart(fig_space, use_container_width=True)
-    
-    if 'date' in filtered_df.columns and filtered_df['date'].notna().sum() > 0:
-        try:
-            filtered_df['date_parsed'] = pd.to_datetime(filtered_df['date'], format='%b%y')
-            monthly_count = filtered_df.groupby(filtered_df['date_parsed'].dt.to_period('M')).size().reset_index()
-            monthly_count.columns = ['month', 'count']
-            monthly_count['month'] = monthly_count['month'].dt.to_timestamp()
-            
-            fig_monthly = px.bar(
-                monthly_count,
-                x='month',
-                y='count',
-                title='Number of Listings by Month',
-                labels={'month': 'Month', 'count': 'Number of Listings'},
-                color_discrete_sequence=['green']
-            )
-            fig_monthly.update_xaxes(tickangle=45)
-            st.plotly_chart(fig_monthly, use_container_width=True)
-        except:
-            st.info("Date data could not be parsed.")
 
 # Footer
 st.markdown("---")
