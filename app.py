@@ -207,17 +207,15 @@ with tab4:
     st.plotly_chart(fig9, use_container_width=True)
 
 # ============================================================
-# TAB 5: PROPERTY CONDITION (FIXED)
+# TAB 5: PROPERTY CONDITION
 # ============================================================
 with tab5:
     st.subheader("Property Condition Analysis")
     
     if 'condition' in filtered_df.columns:
         
-        # Check if condition column has data
         if filtered_df['condition'].notna().sum() > 0:
             
-            # Drop rows with missing condition for these plots
             plot_df = filtered_df.dropna(subset=['condition']).copy()
             
             if len(plot_df) > 0:
@@ -225,7 +223,6 @@ with tab5:
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # Rent by Condition
                     condition_rent = plot_df.groupby('condition')['totalRent'].mean().reset_index()
                     condition_rent = condition_rent.sort_values('totalRent', ascending=True)
                     
@@ -245,7 +242,6 @@ with tab5:
                     st.plotly_chart(fig_condition_rent, use_container_width=True)
                 
                 with col2:
-                    # Condition by Segment
                     condition_by_segment = pd.crosstab(
                         plot_df['price_category'], 
                         plot_df['condition'], 
@@ -280,13 +276,12 @@ with tab5:
                     )
                     st.plotly_chart(fig_condition_segment, use_container_width=True)
                 
-                # Price Trend by Condition (FIXED: Simplified version without order parameter)
+                # Price Trend by Condition
                 if 'calculated_pricetrend' in plot_df.columns:
                     if plot_df['calculated_pricetrend'].notna().sum() > 0:
                         
                         st.subheader("Price Trend by Property Condition")
                         
-                        # Create box plot WITHOUT the order parameter to avoid errors
                         fig_trend = px.box(
                             plot_df,
                             x='condition',
@@ -296,26 +291,10 @@ with tab5:
                             color='condition',
                             color_discrete_sequence=px.colors.qualitative.Set3
                         )
-                        
-                        # Add reference line at 0
                         fig_trend.add_hline(y=0, line_dash="dash", line_color="red", opacity=0.5)
-                        
-                        # Rotate x-axis labels if needed
                         fig_trend.update_xaxes(tickangle=45)
-                        
-                        # Set height
                         fig_trend.update_layout(height=450)
-                        
                         st.plotly_chart(fig_trend, use_container_width=True)
-                        
-                    else:
-                        st.info("ℹ️ No price trend data available.")
-            else:
-                st.warning("⚠️ No valid condition data after removing missing values.")
-        else:
-            st.warning("⚠️ No condition data available for the selected filters.")
-    else:
-        st.warning("⚠️ 'condition' column not found in the dataset.")
 
 # ============================================================
 # TAB 6: PROPERTY CHARACTERISTICS
@@ -390,33 +369,6 @@ with tab6:
                 st.info("ℹ️ No construction year data available.")
         else:
             st.info("ℹ️ No construction year data available.")
-    
-    with col4:
-        if 'energyEfficiencyClass' in filtered_df.columns and filtered_df['energyEfficiencyClass'].notna().sum() > 0:
-            energy_rent = filtered_df.groupby('energyEfficiencyClass')['totalRent'].mean().reset_index()
-            energy_order = ['A+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-            energy_rent['energyEfficiencyClass'] = pd.Categorical(
-                energy_rent['energyEfficiencyClass'], 
-                categories=energy_order, 
-                ordered=True
-            )
-            energy_rent = energy_rent.sort_values('energyEfficiencyClass')
-            
-            fig_energy = px.bar(
-                energy_rent,
-                x='energyEfficiencyClass',
-                y='totalRent',
-                title='Average Rent by Energy Efficiency Class',
-                labels={'energyEfficiencyClass': 'Energy Class', 'totalRent': 'Average Rent (€)'},
-                text='totalRent',
-                color='totalRent',
-                color_continuous_scale='RdYlGn'
-            )
-            fig_energy.update_traces(texttemplate='€%{text:.0f}', textposition='outside')
-            fig_energy.update_layout(height=400)
-            st.plotly_chart(fig_energy, use_container_width=True)
-        else:
-            st.info("ℹ️ No energy efficiency data available.")
 
 # ============================================================
 # TAB 7: PRICE PER SQUARE METER
@@ -424,13 +376,11 @@ with tab6:
 with tab7:
     st.subheader("Price per Square Meter Analysis")
     
-    # Calculate price per square meter
     filtered_df['price_per_sqm'] = filtered_df['totalRent'] / filtered_df['livingSpace']
     
     col1, col2 = st.columns(2)
     
     with col1:
-        # Filter out extreme values for better visualization
         sqm_plot_df = filtered_df[filtered_df['price_per_sqm'] < 30].copy()
         
         if len(sqm_plot_df) > 0:
@@ -490,33 +440,6 @@ with tab7:
             st.plotly_chart(fig_sqm_city, use_container_width=True)
         else:
             st.info("ℹ️ No city data available for price per m² analysis.")
-    
-    with col4:
-        if 'energyEfficiencyClass' in filtered_df.columns and filtered_df['energyEfficiencyClass'].notna().sum() > 0:
-            sqm_energy = filtered_df.groupby('energyEfficiencyClass')['price_per_sqm'].mean().reset_index()
-            energy_order = ['A+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-            sqm_energy['energyEfficiencyClass'] = pd.Categorical(
-                sqm_energy['energyEfficiencyClass'], 
-                categories=energy_order, 
-                ordered=True
-            )
-            sqm_energy = sqm_energy.sort_values('energyEfficiencyClass')
-            
-            fig_sqm_energy = px.bar(
-                sqm_energy,
-                x='energyEfficiencyClass',
-                y='price_per_sqm',
-                title='Price per m² by Energy Efficiency Class',
-                labels={'energyEfficiencyClass': 'Energy Class', 'price_per_sqm': 'Price per m² (€)'},
-                text='price_per_sqm',
-                color='price_per_sqm',
-                color_continuous_scale='RdYlGn'
-            )
-            fig_sqm_energy.update_traces(texttemplate='€%{text:.2f}', textposition='outside')
-            fig_sqm_energy.update_layout(height=400)
-            st.plotly_chart(fig_sqm_energy, use_container_width=True)
-        else:
-            st.info("ℹ️ No energy efficiency data available for price per m² analysis.")
 
 # ============================================================
 # TAB 8: OVERVIEW
